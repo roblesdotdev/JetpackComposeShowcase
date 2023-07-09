@@ -3,19 +3,24 @@ package com.example.restaurantsapp
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.restaurantsapp.data.Restaurant
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class RestaurantsViewModel(private val stateHandle: SavedStateHandle): ViewModel() {
+class RestaurantsViewModel(private val stateHandle: SavedStateHandle) : ViewModel() {
     private var restInterface: RestaurantsApiService
     val state = mutableStateOf(emptyList<Restaurant>())
-    private lateinit var restaurantsCall: Call<List<Restaurant>>
 
-    init  {
+    private val errorHandler = CoroutineExceptionHandler { _, exception ->
+        exception.printStackTrace()
+    }
+
+    init {
         val retrofit: Retrofit = Retrofit.Builder()
             .addConverterFactory(
                 GsonConverterFactory.create()
@@ -27,28 +32,16 @@ class RestaurantsViewModel(private val stateHandle: SavedStateHandle): ViewModel
     }
 
     private fun getRestaurants() {
-        restaurantsCall = restInterface.getRestaurants()
-        restaurantsCall.enqueue(
-            object : Callback<List<Restaurant>> {
-                override fun onResponse(
-                    call: Call<List<Restaurant>>,
-                    response: Response<List<Restaurant>>
-                ) {
-                    response.body()?.let {restaurants ->
-                        state.value = restaurants.restoreSelections()
-                    }
-                }
-
-                override fun onFailure(call: Call<List<Restaurant>>, t: Throwable) {
-                    t.printStackTrace()
-                }
-            }
-        )
+        viewModelScope.launch(errorHandler) {
+            val restaurants = getRemoteRestaurants()
+            state.value = restaurants.restoreSelections()
+        }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        restaurantsCall.cancel()
+    private suspend fun getRemoteRestaurants(): List<Restaurant> {
+        return withContext(Dispatchers.IO) {
+            restInterface.getRestaurants()
+        }
     }
 
     fun toggleFavorite(id: Int) {
@@ -69,10 +62,6 @@ class RestaurantsViewModel(private val stateHandle: SavedStateHandle): ViewModel
         stateHandle[FAVORITES] = savedToggled
     }
 
-    companion object {
-        const val FAVORITES = "favorites"
-    }
-
     private fun List<Restaurant>.restoreSelections(): List<Restaurant> {
         stateHandle.get<List<Int>?>(FAVORITES)?.let { selectedIds ->
             val restaurantMap = this.associateBy { it.id }
@@ -80,6 +69,10 @@ class RestaurantsViewModel(private val stateHandle: SavedStateHandle): ViewModel
             return restaurantMap.values.toList()
         }
         return this
+    }
+
+    companion object {
+        const val FAVORITES = "favorites"
     }
 
 }
