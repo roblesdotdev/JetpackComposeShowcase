@@ -1,2 +1,3 @@
-# RNExpoShowcase
-RNExpoShowcase is a repository featuring a diverse collection of applications developed with React Native and Expo. 
+# Jetpack Compose Showcase
+
+Jetpack Compose Showcase is a repository that curates a list of applications created with Jetpack Compose.
