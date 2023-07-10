@@ -10,7 +10,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             RestaurantsAppTheme {
-                RestaurantsScreen()
+                // RestaurantsScreen()
+                RestaurantDetailsScreen()
             }
         }
     }

@@ -91,8 +91,13 @@ fun RestaurantIcon(icon: ImageVector, modifier: Modifier, onClick: () -> Unit = 
 }
 
 @Composable
-fun RestaurantDetails(title: String, description: String, modifier: Modifier) {
-    Column(modifier = modifier) {
+fun RestaurantDetails(
+    title: String,
+    description: String,
+    modifier: Modifier,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+) {
+    Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
         Text(text = title, style = MaterialTheme.typography.titleLarge)
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
             Text(
