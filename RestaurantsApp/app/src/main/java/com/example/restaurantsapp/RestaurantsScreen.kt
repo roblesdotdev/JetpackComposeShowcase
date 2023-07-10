@@ -30,7 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.restaurantsapp.data.Restaurant
 
 @Composable
-fun RestaurantsScreen() {
+fun RestaurantsScreen(onItemClick: (id: Int) -> Unit = {}) {
     val viewModel: RestaurantsViewModel = viewModel()
     LazyColumn(
         contentPadding = PaddingValues(
@@ -39,18 +39,26 @@ fun RestaurantsScreen() {
         )
     ) {
         items(viewModel.state.value) { restaurant ->
-            RestaurantItem(item = restaurant) { id ->
-                viewModel.toggleFavorite(id)
-            }
+            RestaurantItem(
+                item = restaurant,
+                onFavoriteClick = { id -> viewModel.toggleFavorite(id) },
+                onItemClick = { id -> onItemClick(id) },
+            )
         }
     }
 }
 
 @Composable
-fun RestaurantItem(item: Restaurant, onClick: (id: Int) -> Unit) {
+fun RestaurantItem(
+    item: Restaurant,
+    onFavoriteClick: (id: Int) -> Unit,
+    onItemClick: (id: Int) -> Unit
+) {
     Card(
         elevation = CardDefaults.cardElevation(4.dp),
-        modifier = Modifier.padding(8.dp)
+        modifier = Modifier
+            .padding(8.dp)
+            .clickable { onItemClick(item.id) }
     ) {
         val favoriteState = rememberSaveable {
             mutableStateOf(false)
@@ -65,7 +73,7 @@ fun RestaurantItem(item: Restaurant, onClick: (id: Int) -> Unit) {
                 Icons.Filled.Place,
                 Modifier.weight(0.15f)
             ) {
-                onClick(item.id)
+                onFavoriteClick(item.id)
             }
             RestaurantDetails(
                 item.title,
